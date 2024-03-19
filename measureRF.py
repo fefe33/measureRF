@@ -13,9 +13,8 @@ def banner():
                 ]        [  ||###] //      \\\\ P/__||   \\\\####//  ||  \\b#  ||###]    ||  \\rr# ||
     
     
-    MeasureRF -- by __noobHaxker__
+    MeasureRF -- by __noobHaxker__ (aka fefe33)
     A simple tool to calculate wavelength from frequency and frequency from wavelength
-    shame on all the devs who couldnt put together a website that could do this that wasnt either only over HTTP or filled with annoying ads.
     '''
     help_text = '''
         
@@ -37,7 +36,10 @@ def banner():
 
             to convert between supported frequency units:
                 --convert-frequency <value> <input_unit> <output_unit>
-                
+            
+            to round the output:
+                --round <digits>
+                * remember to add this flag AFTER the value your converting and the input/output units  
                 
                 
         
@@ -102,32 +104,77 @@ def get_wavelength(freq, unit_in, unit_out):
 
 # main program
 def main():
+    #if there are less than 4 commands exit and print what went wrong
+
+
     #define commands
-    valid_cmds = [ '--help', '--frequency', '--wavelength', '--convert-distance', '--convert-frequency']
+    valid_cmds = [ '--help', '--frequency', '--wavelength', '--convert-distance', '--convert-frequency', '--round']
 
     if args[0] not in valid_cmds:
         print(f'argument {args[0]} is not a valid argument. see --help for help with syntax.')
         exit(0)
 
+    #regular validaton:
+    #less than 4 args when not using the --help flag breaks the program
+    if len(args) < 4 and '--help' not in args:
+        print('not enough args supplied. use --help for help with syntax.')
+        exit(0)
 
+    #with round validation
+    #if the round flag is applied, the args list has to be of length 6
+    if '--round' in args and len(args) != 6:
+        print('--round flag specified with no value. see \'--help\' for help with syntax')
+        exit(0)
+    elif '--round' in args and len(args) == 6:
+        is_rounded = True
+        #try to convert last arg to integer
+        try:
+            args[5] = int(args[5])
+        except:
+            print('use integers with the --round flag. see --help option for help with syntax')
+            exit(0)
 
     cmds = {
         '--convert-frequency':translate_frequency,
         '--convert-distance':translate,
         '--frequency':get_frequency,
         '--wavelength':get_wavelength,
-        '--help':banner
+        '--help':banner,
+        '--round':round
     }
+
+
     #if user not asking for help...
     if '--help' not in args and args[0] != '--help':
+        #add rounding functionality
+        #if the --round argument is supplied round to (argv[5]) digits
+
+
+
         #run the args against the commands
         value = cmds[args[0]](float(args[1]), args[2], args[3])
+
+        #declare this as a variable so i dont have to type it a million times
+        r = '--round' in args and args[4] == '--round'
+
         if args[0] == '--wavelength':
-            print(f'full:\t{str(value[0]) + value[1]}\nhalf:\t{str(value[0]/2) + value[1]}\nquarter:\t{str(value[0]/4) + value[1]}')
+            if r:
+                #if the fourth arg is '--round', input that into the function stored at cmds[args[4]] with args[5] as the last argument
+                print(f'full:\t\t{str(cmds[args[4]](value[0], args[5])) + value[1]}\nhalf:\t\t{str(cmds[args[4]](value[0]/ 2, args[5])) + value[1]}\nquarter:\t{str(cmds[args[4]](value[0] / 4, args[5])) + value[1]}')
+            else:
+                print(f'full:\t\t{str(value[0]) + value[1]}\nhalf:\t\t{str(value[0] / 2) + value[1]}\nquarter:\t{str(value[0] / 4) + value[1]}')
+
         elif args[0] == '--convert-distance' or args[0] == '--convert-frequency':
-            print(str(value) + f' {args[3]}')
+            if r:
+                print(str(cmds[args[4]](value, args[5])) + f' {args[3]}')
+            else:
+                print(str(value) + f' {args[3]}')
         else:
-            print(str(value[0]) + value[1])
+            if r:
+                print(str(cmds[args[4]](value[0], args[5])) + value[1])
+            else:
+                print(str(value[0]) + value[1])
+
 
     else:
         #just to make sure its the right gd value (again) so it doesnt break.
